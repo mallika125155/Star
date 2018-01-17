@@ -1,0 +1,255 @@
+ip address: 
+
+http://192.168.1.230:8119/  - db 
+http://192.168.1.231:8119/  - web
+
+no test it in old one test server itself.
+clarified:
+
+1. first i need to run the console application
+   which will insert data into star health master
+   it contains procedure - star health master data update 
+   (in live console applcation is part of scheduler where it takes help of fincale web service and insert data into start health master table)
+   so for testing i should i provide data to procedure : star health master data update 
+2. Data for star health policy details comes from star health organzation to PDWING
+    and PDWNG uses upload engine to upload .txt file using upload id : 5017 so that data is updated into star health details table??
+
+
+\\192.168.1.93\d- star health update sln run using general way or cikc on star heath update .exe
+   to get data inserted into master table 
+   
+
+  Notes for me:
+
+   1. run that console applciation present in this path : \\192.168.1.93\d\StarHealth_Update\StarHealth_Update\bin\Debug\StarHealth_Update.exe
+      After running ths all proposal details are updated into Start health master table.
+   2. these details will be sent to star health insurance org for verfication
+   3. Later PDWNG using upload id :5017 will upload file to engine, where it will insert details into star health policy details
+   4. Laer we can either inquire details using 9168 Inquire Star Health Policy Details maintenance
+   5. Solset Master and sol set items table used in letter module is kept in cbs annex
+   6. solset master table is populated data from letter live and using solset items sync procedure we will insert data into sol set items 
+      so manually we are not inserting any data into sol set items table.
+   7. one Report 4214 is there due for testing at end, once after data everything is proper
+   8. For email and sms, run email_start_health_process and take a sanp of 3 emails generated
+   9. 1 email is for bank as whole and for Ro's. one is for pending proposals to chairman and sections
+   10. for one bank ref no in star health master table, we can have mutiple records for one bank ref no in star health policy with differet status as issued , pending like so
+   11. pending policies status means either data for a bank ref no is not present in star health policy or there are present with status as 'P' - Pending
+   12. ISHP shortcut is woring or not - should update the menu shortcuts procedure
+   13. is 'All' permitted in 9168 ?? - seems it throwed error as 'valid record not found'
+   14. Upload engine testing - 5 modes i guess - test all separately
+   15. in 5017.txt - if status is issued , then policy number and customer code is to be present.
+
+
+  upload file : 5017.txt combinations
+
+  1. give only 1st line
+  2. give data validations for each field like junk data
+  3. miss some data while uplaoding
+  4. add no reason as last field if its pending or rejected
+  5. date validations
+  6. same record added twice
+  7. total no of lines 5 but 3 lines in total
+  8. file with a name other than 5017.txt
+
+
+  Bugs/clarifications:
+
+  1. timeout error duing execution of console application and star health master is not updated. fetch from finacle is fine.
+  2. suppose when an error is generated during 'Validate data' mode in upload engine. Then there is link only to 'Generate Error Report'
+     I guess there is a link for 'Delete Data upload' in some other module. Should it be there or not?
+  3. mode: 'delete upload', upload id search is not showing any records and if given manually accepting
+     same in case of ' verify upload'
+  3. in 5017.txt, 1st line we woll provide date - shpuld it be current date? No its accepting all dates(past and future)
+  5. when i give data in 5017.txt as 
+        '1~5017|25-12-2017|2
+	2~KGB100001|abc|123456|01-12-2017|200000|01-12-2019|R|REJECTED'
+   during 'Validate data' mode, i got error as 'Invalid Bank Reference Number - KGB100001' 
+   But this referencen no is present in star health master table.  - fixed 
+   Tried difference bank refno numbers , but error is same. Please fix so that i can continue testing other combinations
+
+  6. are there any specific customer code specific values??
+
+  7. can policy date in policy details table be same as 'tran date' in master table??
+  8. can policy no in policy details is same as proposal no in master table??
+  9. upload engine 5017 accessible only to sections?? tried 40112 user id ... not alloiwing
+
+
+  testing : 
+
+  tikcet no : 
+
+  original 
+
+  05-12-2017	MG496	40112	401560977	BAVA K	40142100104593	123459	KGB100005	9954	51	SYSTEM	14-12-2017 04:48:01 PM
+
+  SET GDATA = "7~01-12-2017|MG492|40112|401560975|RADHA KRISHNAN V|40142100104591|123456|KGB100001|3569.00~02-12-2017|MG493|40112|401560974|KUYILAN|40142100103285|123457|KGB100002|1000.00~04-12-2017|MG499|40112|401560982|GOPINATHAN  K|40142100105249|123462|KGB100003|15478.00~07-12-2017|MG498|40112|401560981|KUNCHIMAN VAIDYAR|40142100103289|123461|KGB100007|8585.00~05-12-2017|MG496|40112|401560977|BAVA K|40142100104593|123459|KGB100005|9954.00~07-12-2017|MG497|40112|401560978|KUNHUMOL T|40142100104594|123460|KGB100006|1000.00~05-12-2017|MG495|40112|401560976|PRASANNA  PS|40142100105245|123458|KGB100004|15001.00";
+
+*************************88
+Upload 5017 specific :
+
+1. in data, 1st line date is present. Now all past and future dates are accepted. Guess current date should be allowed
+   Even if date is not provided in 1st line of 5017.txt, it is aceepting n inserting.
+2. After verfiy data, we will get msg as 'Data under Upload ID - 16943 validated successfully. Next Step - Verify Data '
+   in msg 'Verify Upload' should be there.
+3. if customer code is not provided in .txt file then still it is not throwing error in 'Validate data' mode.
+    it shoud display as misisng customer code or something.
+    data:
+
+    1~5017|13-12-2017|3
+    2~KGB100006||11|10-12-2017|200.00|13-12-2019|I|SANCTION
+    3~KGB100007||12|11-12-2017|200.00|12-12-2019|R|REJECTED
+
+4. if policy code missing , then error is "Incorrect Date - Position 2 - This should be a date within 7 days including current date "
+   guess not correct error message is thrown.
+   dara:
+   
+   1~5017|13-12-2017|3
+   2~KGB100006|abc||10-12-2017|200.00|13-12-2019|I|SANCTION
+   3~KGB100007|abcD||11-12-2017|200.00|12-12-2019|R|REJECTED
+
+5. if summ assured is given as 0 in file it is accepting and inserting into table. should be greater than zero
+6. in 5017.txt - if status is issued , then policy number and customer code is to be present. - test this scenario
+
+original :
+
+1~5017|13-12-2017|5
+2~3000|abc|11|10-12-2017|200.00|13-12-2019|I|SANCTION
+3~3001|abcD|12|11-12-2017|200.00|12-12-2019|R|REJECTED
+4~3002|aa|13|12-12-2017|300.00|13-12-2019|I|SANCTION
+5~3003|aaa|14|12-12-2017|400.00|13-12-2019|I|ISSUE
+
+testcase 1: 
+
+1~5017|13-12-2017|5 pass:  
+
+No of uploaded records and datacount do not match. Delete the upload ID and start again 
+
+
+test case 2: pass: tested - data inserted 
+
+1~5017|13-12-2017|3
+2~KGB100006|abc|11|10-12-2017|200.00|13-12-2019|I|SANCTION
+3~KGB100007|abcD|12|11-12-2017|200.00|12-12-2019|R|REJECTED
+
+test case 3:  pass : future date - still data got inserted 
+
+1~5017|25-12-2017|3
+2~KGB100006|abc|11|10-12-2017|200.00|13-12-2019|I|SANCTION
+3~KGB100007|abcD|12|11-12-2017|200.00|12-12-2019|R|REJECTED
+
+test case 4: pass:  date missing in 1st line - enter date in position 2
+
+1~5017||3
+2~KGB100006|abc|11|10-12-2017|200.00|13-12-2019|I|SANCTION
+3~KGB100007|abcD|12|11-12-2017|200.00|12-12-2019|R|REJECTED
+
+test case 5: pass:  wrong bank refrence no - Invalid Bank Reference Number - KGB10006 
+
+1~5017|13-12-2017|3
+2~KGB10006|abc|11|10-12-2017|200.00|13-12-2019|I|SANCTION
+3~KGB10007|abcD|12|11-12-2017|200.00|12-12-2019|R|REJECTED
+
+test case 6: pass:  customer code missing : Enter Customer Code 
+
+1~5017|13-12-2017|3
+2~KGB100006|||10-12-2017|200.00|13-12-2019|I|SANCTION
+3~KGB100007|||11-12-2017|200.00|12-12-2019|R|REJECTED
+
+test case 7: pass : policy code missing : Enter Policy Number
+
+1~5017|13-12-2017|3
+2~KGB100006|234||10-12-2017|200.00|13-12-2019|I|SANCTION
+3~KGB100007|||11-12-2017|200.00|12-12-2019|R|REJECTED
+
+test case 8: fail : policy code : 0 : Incorrect Date - Position 2 - This should be a date within 7 days including current date 
+
+1~5017|13-12-2017|3
+2~KGB100006|abc|0|10-12-2017|200.00|13-12-2019|I|SANCTION
+3~KGB100007|abcD|00|11-12-2017|200.00|12-12-2019|R|REJECTED
+
+testcase 9: pass : Policy Date should not be a future date 
+
+1~5017|13-12-2017|3
+2~KGB100006|abc|11|25-12-2017|200.00|13-12-2019|I|SANCTION
+3~KGB100007|abcD|12|25-12-2017|200.00|12-12-2019|R|REJECTED
+
+testcase 10: pass : future date from last 3rd : Expiry Date should be a future date 
+
+1~5017|13-12-2017|3
+2~KGB100006|abc|11|10-12-2017|200.00|05-12-2017|I|SANCTION
+3~KGB100007|abcD|12|11-12-2017|200.00|05-12-2017|R|REJECTED
+
+testcase 10: pass : policy start and end date same : Expiry Date should be a future date 
+
+1~5017|13-12-2017|3
+2~KGB100006|abc|11|15-12-2017|200.00|15-12-2017|I|SANCTION
+3~KGB100007|abcD|12|15-12-2017|200.00|15-12-2017|R|REJECTED
+
+testcase 11: pass : summ asssured : 0  Sum Assured should be greater than zero 
+
+1~5017|13-12-2017|3
+2~KGB100006|abc|11|10-12-2017|0|13-12-2019|I|SANCTION
+3~KGB100007|abcD|12|11-12-2017|0|12-12-2019|R|REJECTED
+
+testcase 12: pass: sum assured missing : Enter Sum Assured 
+
+1~5017|13-12-2017|3
+2~KGB100006|abc|11|10-12-2017||13-12-2019|I|SANCTION
+3~KGB100007|abcD|12|11-12-2017||12-12-2019|R|REJECTED
+
+testcase 13: pass : summ asssured : negative values 0  : Invalid Sum Assured 
+
+1~5017|13-12-2017|3
+2~KGB100006|abc|11|10-12-2017|-1000|13-12-2019|I|SANCTION
+3~KGB100007|abcD|12|11-12-2017|-2000|12-12-2019|R|REJECTED
+
+testcase 14: pass : instead of i, r, p use different character for status  : Invalid Proposal Status 
+1~5017|13-12-2017|3
+2~KGB100006|abc|11|10-12-2017|200.00|13-12-2019|W|SANCTION
+3~KGB100007|abcD|12|11-12-2017|200.00|12-12-2019|B|REJECTED
+
+testcase 15: Pass : Enter Reason 
+
+1~5017|13-12-2017|3
+2~KGB100006|abc|11|10-12-2017|200.00|13-12-2019|P
+3~KGB100007|abcD|12|11-12-2017|200.00|12-12-2019|R
+
+testcase 15: Pass : Enter Reason 
+
+1~5017|13-12-2017|3
+2~KGB100006|abc|11|10-12-2017|200.00|13-12-2019|I|SANCTION
+3~KGB100007|abcD|12|11-12-2017|200.00|12-12-2019|R|
+
+testcase 16: pass: allowed - fine
+
+1~5017|13-12-2017|3
+2~KGB100006|abc|11|10-12-2017|200.00|13-12-2019|I|
+3~KGB100007|abcD|12|11-12-2017|200.00|12-12-2019|R|REJECTED
+
+testcase 17:  different data id number Invalid characters in First Line - Position 1 - This should be Upload Data ID 
+
+1~5016|13-12-2017|3
+2~KGB100006|abc|11|10-12-2017|200.00|13-12-2019|I|SANCTION
+3~KGB100007|abcD|12|11-12-2017|200.00|12-12-2019|R|REJECTED
+
+Testcase 18: duplicate entries should allow
+1~5017|13-12-2017|4
+2~KGB100006|abc|11|10-12-2017|200.00|13-12-2019|I|SANCTION
+3~KGB100007|abcD|12|11-12-2017|200.00|12-12-2019|R|REJECTED
+4~KGB100007|abcD|12|11-12-2017|200.00|12-12-2019|R|REJECTED
+
+testcase 18:  5 lines but actual 9.. wat will jappen 
+No of uploaded records and datacount do not match. Delete the upload ID and start again 
+
+
+REPORT :
+
+1. in heading logo : inspection wing is there - fine?
+2. 40112 user has logged in and for solid field he has given 40144. it should give a message as  - enter Logged in user sol
+4. policy no is not prrsent for som proposals. so can policy number field will have some data madatorily??
+5. i gave policy no as '12378123781', got error as 'Length of Policy Number should not be greater than 30 character '
+   it is less than 30 characters
+
+email process:
+
+1. unknown column : TSHE.TSOL_ID while executing email_10015 process.
